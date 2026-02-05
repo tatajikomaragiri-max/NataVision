@@ -6,6 +6,8 @@ import pool from "../config/db.js";
 import { protect } from "../middleware/auth.js";
 import dns from "dns";
 import { promisify } from "util";
+const router = express.Router();
+
 /*
 // --- Email Transporter Configuration (DISABLED) ---
 const transporter = nodemailer.createTransport({
