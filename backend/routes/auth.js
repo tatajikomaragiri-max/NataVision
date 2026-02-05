@@ -6,30 +6,16 @@ import pool from "../config/db.js";
 import { protect } from "../middleware/auth.js";
 import dns from "dns";
 import { promisify } from "util";
-import nodemailer from "nodemailer";
-
-const resolveMx = promisify(dns.resolveMx);
-
-const router = express.Router();
-
-const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "Strict",
-  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  path: "/",
-};
-
-// --- Email Transporter Configuration ---
+/*
+// --- Email Transporter Configuration (DISABLED) ---
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Or use host/port for other providers
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // Set these in .env
+    user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// Verify connection configuration
 transporter.verify(function (error, success) {
   if (error) {
     console.log("[MAIL] Connection error:", error);
@@ -37,7 +23,9 @@ transporter.verify(function (error, success) {
     console.log("[MAIL] Server is ready to take our messages");
   }
 });
+*/
 
+/*
 const sendEmail = async (to, subject, html) => {
   try {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -55,6 +43,7 @@ const sendEmail = async (to, subject, html) => {
     console.error(`[MAIL] Failed to send email to ${to}:`, error);
   }
 };
+*/
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
