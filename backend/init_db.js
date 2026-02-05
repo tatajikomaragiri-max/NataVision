@@ -7,7 +7,7 @@ const setupDB = async () => {
 
         // 0. Create Users table if it doesn't exist
         await client.query(`
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS public.users (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
@@ -20,7 +20,7 @@ const setupDB = async () => {
 
         // 2. Create Questions table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS questions (
+            CREATE TABLE IF NOT EXISTS public.questions (
                 id SERIAL PRIMARY KEY,
                 question_text TEXT NOT NULL,
                 image_url TEXT,
@@ -35,7 +35,7 @@ const setupDB = async () => {
 
         // 3. Create Exams table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS exams (
+            CREATE TABLE IF NOT EXISTS public.exams (
                 id SERIAL PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 duration_minutes INTEGER DEFAULT 180,
@@ -49,10 +49,10 @@ const setupDB = async () => {
 
         // 4. Create Exam Results table (to track user performance)
         await client.query(`
-            CREATE TABLE IF NOT EXISTS exam_results (
+            CREATE TABLE IF NOT EXISTS public.exam_results (
                 id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                exam_id INTEGER REFERENCES exams(id) ON DELETE CASCADE,
+                user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+                exam_id INTEGER REFERENCES public.exams(id) ON DELETE CASCADE,
                 score INTEGER NOT NULL,
                 total_marks INTEGER NOT NULL,
                 correct_count INTEGER NOT NULL,
@@ -65,9 +65,9 @@ const setupDB = async () => {
 
         // 5. Create Notifications table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS notifications (
+            CREATE TABLE IF NOT EXISTS public.notifications (
                 id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
                 title VARCHAR(255) NOT NULL,
                 message TEXT NOT NULL,
                 is_read BOOLEAN DEFAULT FALSE,
