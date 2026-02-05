@@ -54,6 +54,22 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
+import pool from "./config/db.js";
+app.get("/api/test-db", async (req, res) => {
+  try {
+    const time = await pool.query("SELECT NOW()");
+    const tables = await pool.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'");
+    res.json({
+      status: "Connected",
+      time: time.rows[0],
+      tables: tables.rows.map(r => r.table_name),
+      env_db_url: process.env.DATABASE_URL ? "Set" : "Missing"
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
 process.on("unhandledRejection", (err) => {
