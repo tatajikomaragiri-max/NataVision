@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "fs";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
@@ -69,7 +70,8 @@ const validateEmail = async (email) => {
     return { valid: false, message: "Invalid email format" };
   }
 
-  // 2. DNS check for MX records
+  // 2. DNS check for MX records (SKIPPED to prevent local timeouts)
+  /*
   const domain = email.split("@")[1];
   try {
     const mxRecords = await resolveMx(domain);
@@ -80,80 +82,35 @@ const validateEmail = async (email) => {
     console.warn(`DNS check failed for domain: ${domain}`, error.code);
     return { valid: false, message: "Invalid or non-existing email domain" };
   }
+  */
+  console.log(`[AUTH] DNS check skipped for ${email}`);
 
   return { valid: true };
 };
 
 // --- OTP Generation for Registration ---
+/*
+// --- OTP Generation for Registration (DISABLED) ---
 router.post("/request-registration-otp", async (req, res) => {
+  res.status(404).json({ message: "OTP registration is disabled." });
+});
+*/
+
+// Register (Finalize with OTP)
+// Register (Direct, No OTP)
+router.post("/register", async (req, res) => {
   const { name, password } = req.body;
   const email = req.body.email?.trim().toLowerCase();
 
   if (!name || !email || !password) {
-    return res.status(400).json({ message: "Please provide name, email, and password" });
+    return res.status(400).json({ message: "Please provide all required fields" });
   }
 
   try {
-    // 1. Validate email
-    const validation = await validateEmail(email);
-    if (!validation.valid) {
-      return res.status(400).json({ message: validation.message });
-    }
-
-    // 2. Check if user already exists
+    // 1. Check if user already exists
     const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     if (userExists.rows.length > 0) {
       return res.status(400).json({ message: "User already exists" });
-    }
-
-    // 3. Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-
-    // 4. Store/Update OTP in registration_otps table
-    await pool.query(
-      "INSERT INTO registration_otps (email, otp, expires_at) VALUES ($1, $2, $3) ON CONFLICT (email) DO UPDATE SET otp = $2, expires_at = $3, created_at = NOW()",
-      [email, otp, expiry]
-    );
-
-    // 5. Send Email via Nodemailer
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Verify Your Email</h2>
-        <p>Your verification code for NATA Vision registration is:</p>
-        <h1 style="color: #3b6a9a; letter-spacing: 5px;">${otp}</h1>
-        <p>This code expires in 10 minutes.</p>
-        <p>If you didn't request this code, please ignore this email.</p>
-      </div>
-    `;
-
-    await sendEmail(email, "Verify Your Email - NATA Vision", emailHtml);
-
-    res.json({ message: "Verification code sent to your email!" });
-  } catch (error) {
-    console.error("OTP Request Error:", error);
-    res.status(500).json({ message: "Server error during OTP request" });
-  }
-});
-
-// Register (Finalize with OTP)
-router.post("/register", async (req, res) => {
-  const { name, password, otp } = req.body;
-  const email = req.body.email?.trim().toLowerCase();
-
-  if (!name || !email || !password || !otp) {
-    return res.status(400).json({ message: "Please provide all required fields including the verification code" });
-  }
-
-  try {
-    // 1. Verify OTP
-    const otpRes = await pool.query(
-      "SELECT * FROM registration_otps WHERE email = $1 AND otp = $2 AND expires_at > NOW()",
-      [email, otp]
-    );
-
-    if (otpRes.rows.length === 0) {
-      return res.status(400).json({ message: "Invalid or expired verification code" });
     }
 
     // 2. Create User
@@ -163,10 +120,7 @@ router.post("/register", async (req, res) => {
       [name, email, hashedPassword, "student"]
     );
 
-    // 3. Cleanup OTP
-    await pool.query("DELETE FROM registration_otps WHERE email = $1", [email]);
-
-    // 4. Set Cookie & Respond
+    // 3. Set Cookie & Respond
     const newUser = newUserRes.rows[0];
     const token = generateToken(newUser.id);
     res.cookie("token", token, cookieOptions);
@@ -245,102 +199,17 @@ router.post("/logout", (req, res) => {
 // --- Forgot Password (OTP) Flow ---
 
 // 1. Request OTP
+/*
+// --- Forgot Password (OTP) Flow (DISABLED) ---
 router.post("/forgot-password", async (req, res) => {
-  const email = req.body.email?.trim().toLowerCase();
-  try {
-    const user = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
-    if (user.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "User with this email does not exist" });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-
-    await pool.query(
-      "UPDATE users SET otp_code = $1, otp_expiry = $2 WHERE email = $3",
-      [otp, expiry, email]
-    );
-
-    // 5. Send Email via Nodemailer
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Reset Your Password</h2>
-        <p>Your password reset code is:</p>
-        <h1 style="color: #3b6a9a; letter-spacing: 5px;">${otp}</h1>
-        <p>This code expires in 10 minutes.</p>
-      </div>
-    `;
-
-    await sendEmail(email, "Password Reset Request - NATA Vision", emailHtml);
-
-    res.json({ message: "Verification code sent to your email!" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+    res.status(404).json({ message: "Forgot password is disabled." });
 });
-
-// 2. Verify OTP
 router.post("/verify-otp", async (req, res) => {
-  const { otp } = req.body;
-  const email = req.body.email?.trim().toLowerCase();
-  try {
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1 AND otp_code = $2 AND otp_expiry > NOW()",
-      [email, otp]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
-
-    res.json({ message: "OTP verified correctly" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+    res.status(404).json({ message: "Disabled." });
 });
-
-// 3. Reset Password
 router.post("/reset-password", async (req, res) => {
-  const { otp, newPassword } = req.body;
-  const email = req.body.email?.trim().toLowerCase();
-  try {
-    // Verify again just to be safe
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1 AND otp_code = $2 AND otp_expiry > NOW()",
-      [email, otp]
-    );
-
-    if (result.rows.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Session expired, please try again" });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    console.log(`[RESET] Hash generated: ${hashedPassword.substring(0, 10)}...`);
-
-    const updateRes = await pool.query(
-      "UPDATE users SET password = $1, otp_code = NULL, otp_expiry = NULL WHERE email = $2",
-      [hashedPassword, email]
-    );
-
-    console.log(`[RESET] Password update rowCount: ${updateRes.rowCount} for ${email}`);
-
-    if (updateRes.rowCount === 0) {
-      console.warn(`[RESET] WARNING: Update returned 0 rows for ${email}`);
-    }
-
-    res.json({ message: "Password reset successful! You can now log in." });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+   res.status(404).json({ message: "Disabled." });
 });
+*/
 
 export default router;

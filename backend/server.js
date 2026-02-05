@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
+import fs from "fs";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,6 +15,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+
+app.use((req, res, next) => {
+  const log = `[${new Date().toISOString()}] ${req.method} ${req.url}\n`;
+  fs.appendFileSync('debug_log.txt', log);
+  next();
+});
 
 
 const allowedOrigins = [

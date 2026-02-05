@@ -70,7 +70,7 @@ const Login = ({ setUser }) => {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <form onSubmit={handleSubmit} className="space-y-3" autoComplete="off">
                     {error && (
                         <div className="p-2.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-xl text-center border border-red-100">
                             {error}
@@ -83,11 +83,13 @@ const Login = ({ setUser }) => {
                         </label>
                         <input
                             type="email"
-                            placeholder="name@example.com"
+                            name="email"
+                            placeholder="Enter your email"
                             className="w-full px-3 py-2 rounded-xl border border-gray-100 bg-gray-50/30 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 focus:bg-white transition-all placeholder:text-gray-300 font-bold text-xs"
                             value={form.email}
                             onChange={(e) => setForm({ ...form, email: e.target.value })}
                             required
+                            autoComplete="new-email"
                         />
                     </div>
 
@@ -98,11 +100,13 @@ const Login = ({ setUser }) => {
                         <div className="relative">
                             <input
                                 type={showPassword ? "text" : "password"}
+                                name="password"
                                 placeholder="Enter your password"
                                 className="w-full px-3 py-2 rounded-xl border border-gray-100 bg-gray-50/30 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 focus:bg-white transition-all placeholder:text-gray-300 font-bold text-xs"
                                 value={form.password}
                                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                                 required
+                                autoComplete="new-password"
                             />
                             <button
                                 type="button"
@@ -112,11 +116,7 @@ const Login = ({ setUser }) => {
                                 {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                             </button>
                         </div>
-                        <div className="flex justify-end pr-1">
-                            <Link to="/forgot-password" size="sm" className="text-[10px] font-bold text-[#3b82f6] hover:text-[#2563eb] transition-colors">
-                                Forgot Password?
-                            </Link>
-                        </div>
+
                     </div>
 
                     <button

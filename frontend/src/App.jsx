@@ -13,7 +13,7 @@ import BottomNav from "./components/BottomNav";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
+
 import MockTest from "./pages/MockTest";
 import ExamResults from "./pages/ExamResults";
 import ResultReview from "./pages/ResultReview";
@@ -54,10 +54,7 @@ const AppContent = ({ user, setUser, error }) => {
           path="/register"
           element={user ? <Navigate to="/" /> : <Register user={user} setUser={setUser} />}
         />
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout user={user} setUser={setUser}><AdminDashboard /></AdminLayout>} />
