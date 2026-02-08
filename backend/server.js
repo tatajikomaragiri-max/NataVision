@@ -1,13 +1,15 @@
-import express from "express"; // Restart trigger 3
+import express from "express";
+import fs from "fs"; // Restart trigger 3
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin.js";
-import fs from "fs";
+
 
 import path from "path";
 import { fileURLToPath } from "url";
+import pool from "./config/db.js";
 
 dotenv.config();
 
@@ -29,6 +31,7 @@ const allowedOrigins = [
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:5176",
+  "https://nata-vision.vercel.app",
   process.env.CLIENT_URL,
 ].filter(Boolean); // Remove undefined if env var is missing
 
@@ -37,10 +40,11 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(o => origin.startsWith(o))) { // Flexible matching
+      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(o => origin.startsWith(o))) {
         callback(null, true);
       } else {
-        console.log("Blocked by CORS:", origin); // Debugging
+        console.error("Blocked by CORS. Origin:", origin); // Changed to console.error for visibility
+        console.error("Allowed Origins:", allowedOrigins);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -54,7 +58,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
-import pool from "./config/db.js";
+
 app.get("/api/test-db", async (req, res) => {
   try {
     const time = await pool.query("SELECT NOW()");
@@ -80,6 +84,10 @@ process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
 });
 
+
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  fs.appendFileSync('debug_log.txt', `[SERVER_START] Server started on port ${PORT} at ${new Date().toISOString()}\n`);
 });
+// Force restart for env update - 2

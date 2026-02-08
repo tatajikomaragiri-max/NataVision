@@ -1,11 +1,36 @@
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
 
+import fs from 'fs';
+
 export const protect = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    let token;
+
+    // Log headers to debug
+    const logMsg = `[AUTH_DEBUG] Headers: ${JSON.stringify(req.headers.authorization)} | Cookie: ${!!req.cookies.token}\n`;
+    fs.appendFileSync('debug_log.txt', logMsg);
+
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      try {
+        token = req.headers.authorization.split(" ")[1];
+      } catch (error) {
+        console.error("Token split failed:", error);
+      }
+    } else {
+      console.log("No Authorization header found. Checking cookies...");
+    }
+
+    if (req.cookies.token) {
+      if (!token) console.log("Token found in cookies");
+      token = token || req.cookies.token;
+    }
 
     if (!token) {
+      fs.appendFileSync('debug_log.txt', `[AUTH_DEBUG] No token found. Sending 401.\n`);
       return res.status(401).json({ message: "Not authorized, no token" });
     }
 
