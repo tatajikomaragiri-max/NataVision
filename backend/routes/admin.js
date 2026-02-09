@@ -311,4 +311,37 @@ router.get("/my-results", protect, async (req, res) => {
   }
 });
 
+// 7. Get Exam Questions (Student Validation)
+router.get("/exams/:id/questions", protect, async (req, res) => {
+  try {
+    const { id } = req.params;
+    // FETCH Exam
+    const examRes = await pool.query("SELECT * FROM exams WHERE id = $1", [id]);
+    if (examRes.rows.length === 0) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+    const exam = examRes.rows[0];
+
+    // FETCH Questions
+    const questionIds = exam.question_ids;
+    if (!questionIds || questionIds.length === 0) {
+      return res.json({ exam, questions: [] });
+    }
+
+    const questionsRes = await pool.query(
+      "SELECT * FROM questions WHERE id = ANY($1)",
+      [questionIds]
+    );
+
+    // Map questions to match the order in questionIds
+    const questionsMap = new Map(questionsRes.rows.map(q => [q.id, q]));
+    const orderedQuestions = questionIds.map(id => questionsMap.get(id)).filter(Boolean);
+
+    res.json({ exam, questions: orderedQuestions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching exam questions" });
+  }
+});
+
 export default router;
