@@ -177,3 +177,4 @@ TypeError: pdfParse.default is not a function
 [2026-02-09T09:43:10.514Z] GET /api/admin/my-results
 [AUTH_DEBUG] Headers: undefined | Cookie: false
 [AUTH_DEBUG] No token found. Sending 401.
+[SERVER_START] Server started on port 5000 at 2026-02-09T09:51:33.701Z
