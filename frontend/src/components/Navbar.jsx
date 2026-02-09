@@ -15,6 +15,10 @@ const Navbar = ({ user, setUser }) => {
             localStorage.removeItem('adminToken');
         } catch (err) {
             console.error(err);
+        } finally {
+            setUser(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('adminToken');
         }
     };
     // ... rest of file implicitly kept by replace_file_content rules? No, I must provide full content or use correct Start/End.
