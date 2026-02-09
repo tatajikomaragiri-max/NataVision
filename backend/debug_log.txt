@@ -157,3 +157,12 @@ TypeError: pdfParse.default is not a function
 [SERVER_START] Server started on port 5000 at 2026-02-08T09:41:44.988Z
 [SERVER_START] Server started on port 5000 at 2026-02-08T10:05:32.447Z
 [SERVER_START] Server started on port 5000 at 2026-02-09T06:54:49.677Z
+[2026-02-09T07:21:30.851Z] GET /api/auth/me
+[AUTH_DEBUG] Headers: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiaWF0IjoxNzcwNDU2NTk1LCJleHAiOjE3NzMwNDg1OTV9.u5MK7_ZrWmLsXCWhd-dvyim5Mvms7DBcQyQysIxbqjU" | Cookie: true
+[2026-02-09T07:21:31.112Z] GET /api/auth/me
+[AUTH_DEBUG] Headers: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiaWF0IjoxNzcwNDU2NTk1LCJleHAiOjE3NzMwNDg1OTV9.u5MK7_ZrWmLsXCWhd-dvyim5Mvms7DBcQyQysIxbqjU" | Cookie: true
+[2026-02-09T07:21:31.337Z] GET /api/admin/stats
+[AUTH_DEBUG] Headers: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiaWF0IjoxNzcwNDU2NTk1LCJleHAiOjE3NzMwNDg1OTV9.u5MK7_ZrWmLsXCWhd-dvyim5Mvms7DBcQyQysIxbqjU" | Cookie: true
+[2026-02-09T07:21:31.426Z] GET /api/admin/stats
+[AUTH_DEBUG] Headers: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiaWF0IjoxNzcwNDU2NTk1LCJleHAiOjE3NzMwNDg1OTV9.u5MK7_ZrWmLsXCWhd-dvyim5Mvms7DBcQyQysIxbqjU" | Cookie: true
+[2026-02-09T07:21:40.869Z] POST /api/auth/logout
