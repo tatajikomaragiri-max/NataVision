@@ -11,6 +11,7 @@ const Navbar = ({ user, setUser }) => {
                 { withCredentials: true }
             );
             setUser(null);
+            localStorage.removeItem('token');
         } catch (err) {
             console.error(err);
         }

@@ -25,16 +25,33 @@ const Login = ({ setUser }) => {
                 setError("Access denied: This login is for administrators only.");
                 // Immediately clear the cookie set by backend
                 await api.post("/api/auth/logout", {}, { withCredentials: true });
+                localStorage.removeItem('token');
+                localStorage.removeItem('adminToken');
                 return;
             }
 
+            if (!res.data.token) {
+                alert("CRITICAL ERROR: Backend did not return a token! Please report this.");
+                console.error("Login response missing token:", res.data);
+                return;
+            }
+
+            // SUCCESS
+            console.log("Login successful. Saving token:", res.data.token);
+
+            // Save as BOTH for compatibility and the new fix
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('adminToken', res.data.token);
+
             setUser(res.data.user);
+
             if (res.data.user.role === 'admin') {
                 navigate("/admin");
             } else {
                 navigate("/");
             }
         } catch (err) {
+            console.error("Login error:", err);
             setError(err.response?.data?.message || err.message || "Invalid email or password");
         }
     };

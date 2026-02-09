@@ -10,11 +10,12 @@ const router = express.Router();
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "Strict",
-  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  secure: true,        // REQUIRED on Render (HTTPS)
+  sameSite: "none",    // REQUIRED for Vercel ↔ Render
+  maxAge: 30 * 24 * 60 * 60 * 1000,
   path: "/",
 };
+
 
 /*
 // --- Email Transporter Configuration (DISABLED) ---
@@ -124,7 +125,7 @@ router.post("/register", async (req, res) => {
     const token = generateToken(newUser.id);
     res.cookie("token", token, cookieOptions);
 
-    return res.status(201).json({ user: newUser });
+    return res.status(201).json({ user: newUser, token });
   } catch (error) {
     console.error("Registration Error:", error);
     res.status(500).json({ message: `Server error: ${error.message}` });
@@ -137,14 +138,17 @@ router.post("/login", async (req, res) => {
   const email = req.body.email?.trim().toLowerCase();
   try {
     if (!email || !password) {
+      fs.appendFileSync('debug_log.txt', `[LOGIN_DEBUG] Missing fields\n`);
       return res
         .status(400)
         .json({ message: "Please provide all required fields" });
     }
 
+    fs.appendFileSync('debug_log.txt', `[LOGIN_DEBUG] Querying user for ${email}...\n`);
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
+    fs.appendFileSync('debug_log.txt', `[LOGIN_DEBUG] User found: ${user.rows.length > 0}\n`);
 
     if (user.rows.length === 0) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -171,27 +175,37 @@ router.post("/login", async (req, res) => {
         email: userData.email,
         role: userData.role,
       },
+      token,
     });
   } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ message: `Login error: ${error.message}` });
+    console.error(error);
+    fs.appendFileSync('debug_log.txt', `[LOGIN_ERROR] ${error.message}\n${error.stack}\n`);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // Me
 router.get("/me", protect, async (req, res) => {
-  res.json(req.user);
-  // return info of the logged in user from protect middleware
+  // Explicitly log who is accessing
+  console.log(`[AUTH] /me accessed by user: ${req.user.email} (${req.user.id})`);
+
+  res.json({
+    id: req.user.id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+  });
 });
 
 // Logout
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
+    secure: true,
+    sameSite: "none",
     path: "/",
   });
+
   res.json({ message: "Logged out successfully" });
 });
 

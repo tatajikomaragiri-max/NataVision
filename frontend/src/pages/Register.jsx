@@ -33,6 +33,7 @@ const Register = ({ user, setUser }) => {
         try {
             const res = await api.post("/api/auth/register", form);
             setUser(res.data.user);
+            localStorage.setItem('token', res.data.token);
             navigate("/");
         } catch (err) {
             console.error(err);

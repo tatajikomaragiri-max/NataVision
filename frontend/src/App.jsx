@@ -85,23 +85,60 @@ function App() {
 
   useEffect(() => {
     const fetchUser = async () => {
+      console.log("App Version: 1.5 - AUTO-LOGOUT FIX"); // 🔥 VERIFY THIS LOG
       console.log("App: Fetching user...");
       try {
         const res = await api.get("/api/auth/me");
         console.log("App: User fetched:", res.data);
+
+        // ZOMBIE CHECK: User via Cookie YES, Token NO -> Force Logout
+        const hasToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+        if (res.data && !hasToken) {
+          console.warn("App: ZOMBIE SESSION DETECTED! User logged in via Cookie, but LocalStorage Token is missing. Forcing logout to fix.");
+          await api.post("/api/auth/logout");
+          setUser(null);
+          return;
+        }
+
         setUser(res.data);
       } catch (err) {
         console.log("App: No session found or error:", err.message);
+        // Clear any potentially bad tokens explicitly
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminToken');
+
+        if (err.code === 'ECONNABORTED') {
+          console.error("App: Request timed out. Backend might be sleeping or unreachable.");
+        }
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
     fetchUser();
+
+    // Absolute failsafe: Turn off loading after 5 seconds no matter what
+    const timer = setTimeout(() => {
+      setLoading(current => {
+        if (current) {
+          console.error("App: Failsafe triggered. Forcing loading to false.");
+          console.log("App: VITE_API_URL is:", import.meta.env.VITE_API_URL);
+          return false; // Force stop loading
+        }
+        return current;
+      });
+    }, 5000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
-    return <div className="h-screen flex items-center justify-center font-bold text-[#3b6a9a]">Loading...</div>;
+    return (
+      <div className="h-screen flex flex-col items-center justify-center font-bold text-[#3b6a9a] gap-4">
+        <div className="animate-pulse text-xl">Loading...</div>
+        <div className="text-xs text-gray-400 font-normal">Connecting to server...</div>
+      </div>
+    );
   }
 
   return (

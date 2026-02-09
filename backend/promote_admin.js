@@ -10,7 +10,7 @@ if (!email) {
 const promote = async () => {
     try {
         const res = await pool.query(
-            "UPDATE users SET role = 'admin' WHERE email = $1 RETURNING id, name, email, role",
+            "UPDATE public.users SET role = 'admin' WHERE email = $1 RETURNING id, name, email, role",
             [email]
         );
 

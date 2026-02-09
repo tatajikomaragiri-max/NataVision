@@ -14,6 +14,7 @@ const AdminSidebar = ({ setUser, isOpen, onClose }) => {
             console.error("Logout API failed", err);
         } finally {
             if (setUser) setUser(null);
+            localStorage.removeItem('token');
             navigate("/");
         }
     };

@@ -7,7 +7,7 @@ const AdminLayout = ({ children, user, setUser }) => {
 
     // Basic protection: Only admins can see this
     if (!user || user.role !== 'admin') {
-        return null; // Let the Sidebar's navigate handle redirection
+        return <Navigate to="/login" replace />;
     }
 
     return (
