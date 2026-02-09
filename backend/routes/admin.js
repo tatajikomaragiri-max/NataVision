@@ -344,4 +344,62 @@ router.get("/exams/:id/questions", protect, async (req, res) => {
   }
 });
 
+// 8. Submit Exam (Student)
+router.post("/submit-exam", protect, async (req, res) => {
+  try {
+    const { examId, answers } = req.body;
+    const userId = req.user.id;
+
+    // 1. Fetch Exam & Questions
+    const examRes = await pool.query("SELECT * FROM exams WHERE id = $1", [examId]);
+    if (examRes.rows.length === 0) return res.status(404).json({ message: "Exam not found" });
+    const exam = examRes.rows[0];
+
+    const questionsRes = await pool.query(
+      "SELECT id, correct_index, points FROM questions WHERE id = ANY($1)",
+      [exam.question_ids]
+    );
+
+    // Map for easy lookup
+    const questionMap = new Map(questionsRes.rows.map(q => [q.id, q]));
+
+    // 2. Calculate Score
+    let score = 0;
+    let totalMarks = 0;
+
+    // Iterate based on exam.question_ids to maintain order matching the answers array
+    exam.question_ids.forEach((qId, idx) => {
+      const question = questionMap.get(qId);
+      if (question) {
+        const points = question.points || 1;
+        totalMarks += points; // Increment total possible marks
+
+        // userAnswers array index corresponds to question index
+        if (answers[idx] === question.correct_index) {
+          score += points;
+        }
+      }
+    });
+
+    // 3. Save Result
+    const resultRes = await pool.query(
+      `INSERT INTO exam_results (user_id, exam_id, score, total_marks, answers, completed_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING id`,
+      [userId, examId, score, totalMarks, JSON.stringify(answers)]
+    );
+
+    res.json({
+      id: resultRes.rows[0].id,
+      message: "Exam submitted successfully",
+      score,
+      totalMarks
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error submitting exam" });
+  }
+});
+
 export default router;
