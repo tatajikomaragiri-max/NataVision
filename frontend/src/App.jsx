@@ -85,32 +85,27 @@ function App() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      console.log("App Version: 1.7.1 - BUILD FIX VERIFIED"); // 🔥 VERIFY 1.7.1
+      console.log("App Version: 1.7.2 - TOKEN PRE-CHECK");
       console.log("App: Fetching user...");
+
+      // 1. PRE-CHECK: If no local token, assume logged out.
+      // This prevents "Zombie Cookies" from keeping us logged in after logout.
+      const localToken = localStorage.getItem('adminToken');
+      if (!localToken) {
+        console.log("App: No 'adminToken' found. Skipping fetch. User is GUEST.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await api.get("/api/auth/me");
         console.log("App: User fetched:", res.data);
-
-        // ZOMBIE CHECK: User via Cookie YES, Token NO -> Force Logout
-        // STRICT MODE: Only accept 'adminToken'. Ignore 'token'.
-        const hasToken = localStorage.getItem('adminToken');
-        if (res.data && !hasToken) {
-          console.warn("App: ZOMBIE SESSION DETECTED! User logged in via Cookie, but LocalStorage Token is missing. Forcing logout to fix.");
-          await api.post("/api/auth/logout");
-          setUser(null);
-          return;
-        }
-
         setUser(res.data);
       } catch (err) {
         console.log("App: No session found or error:", err.message);
         // Clear any potentially bad tokens explicitly
         localStorage.removeItem('token');
         localStorage.removeItem('adminToken');
-
-        if (err.code === 'ECONNABORTED') {
-          console.error("App: Request timed out. Backend might be sleeping or unreachable.");
-        }
         setUser(null);
       } finally {
         setLoading(false);
