@@ -12,6 +12,7 @@ const Navbar = ({ user, setUser }) => {
             );
             setUser(null);
             localStorage.removeItem('token');
+            localStorage.removeItem('adminToken');
         } catch (err) {
             console.error(err);
         }
