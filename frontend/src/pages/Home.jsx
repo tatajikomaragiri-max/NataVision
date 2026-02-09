@@ -70,20 +70,25 @@ const DashboardView = ({ user }) => {
 
     useEffect(() => {
         const fetchData = async () => {
+            // 1. Fetch Tests
             try {
-                const [examsRes, resultsRes] = await Promise.all([
-                    api.get("/api/admin/published-exams"),
-                    api.get("/api/admin/my-results")
-                ]);
+                const examsRes = await api.get("/api/admin/published-exams");
                 setAvailableTests(examsRes.data);
-                setRecentResults(resultsRes.data.slice(0, 3).map(r => ({
+            } catch (err) {
+                console.error("Failed to fetch exams", err);
+            }
+
+            // 2. Fetch Results (Independent)
+            try {
+                const resultsRes = await api.get("/api/admin/my-results");
+                setRecentResults(resultsRes.data.map(r => ({
                     title: r.exam_title,
                     score: `${r.score}/${r.total_marks}`,
                     trend: `${Math.round((r.score / r.total_marks) * 100)}%`,
                     positive: (r.score / r.total_marks) > 0.5
                 })));
             } catch (err) {
-                console.error("Failed to fetch dashboard data");
+                console.warn("Failed to fetch results (API might be missing)", err);
             } finally {
                 setLoading(false);
             }

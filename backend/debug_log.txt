@@ -167,3 +167,4 @@ TypeError: pdfParse.default is not a function
 [AUTH_DEBUG] Headers: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NywiaWF0IjoxNzcwNDU2NTk1LCJleHAiOjE3NzMwNDg1OTV9.u5MK7_ZrWmLsXCWhd-dvyim5Mvms7DBcQyQysIxbqjU" | Cookie: true
 [2026-02-09T07:21:40.869Z] POST /api/auth/logout
 [SERVER_START] Server started on port 5000 at 2026-02-09T08:27:42.777Z
+[SERVER_START] Server started on port 5000 at 2026-02-09T09:02:27.254Z

@@ -293,4 +293,22 @@ router.post("/generate-exam", protect, admin, async (req, res) => {
   }
 });
 
+// 6. Get My Results (Student)
+router.get("/my-results", protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT er.*, e.title as exam_title 
+             FROM exam_results er 
+             JOIN exams e ON er.exam_id = e.id 
+             WHERE er.user_id = $1 
+             ORDER BY er.completed_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching results" });
+  }
+});
+
 export default router;
