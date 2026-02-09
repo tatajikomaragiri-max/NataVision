@@ -169,3 +169,11 @@ TypeError: pdfParse.default is not a function
 [SERVER_START] Server started on port 5000 at 2026-02-09T08:27:42.777Z
 [SERVER_START] Server started on port 5000 at 2026-02-09T09:02:27.254Z
 [SERVER_START] Server started on port 5000 at 2026-02-09T09:37:21.214Z
+[SERVER_START] Server started on port 5000 at 2026-02-09T09:41:46.257Z
+[SERVER_START] Server started on port 5000 at 2026-02-09T09:43:09.682Z
+[2026-02-09T09:43:10.417Z] GET /api/admin/exams/1/questions
+[AUTH_DEBUG] Headers: undefined | Cookie: false
+[AUTH_DEBUG] No token found. Sending 401.
+[2026-02-09T09:43:10.514Z] GET /api/admin/my-results
+[AUTH_DEBUG] Headers: undefined | Cookie: false
+[AUTH_DEBUG] No token found. Sending 401.
