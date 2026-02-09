@@ -85,7 +85,7 @@ function App() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      console.log("App Version: 1.7 - STRICT LOGOUT"); // 🔥 VERIFY 1.7
+      console.log("App Version: 1.7.1 - BUILD FIX VERIFIED"); // 🔥 VERIFY 1.7.1
       console.log("App: Fetching user...");
       try {
         const res = await api.get("/api/auth/me");
