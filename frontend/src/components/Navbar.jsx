@@ -17,8 +17,7 @@ const Navbar = ({ user, setUser }) => {
             console.error(err);
         } finally {
             console.log("Forcing Logout...");
-            localStorage.removeItem('token');
-            localStorage.removeItem('adminToken');
+            localStorage.clear(); // NUKE EVERYTHING
             setUser(null);
             window.location.href = "/login"; // Force Hard Refresh/Redirect
         }

@@ -85,52 +85,54 @@ function App() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      console.log("App Version: 1.6 - HARD LOGOUT & EXAM FIX"); // 🔥 VERIFY 1.6
-      console.log("App: Fetching user...");
-      try {
-        const res = await api.get("/api/auth/me");
-        console.log("App: User fetched:", res.data);
+      const fetchUser = async () => {
+        console.log("App Version: 1.7 - STRICT LOGOUT"); // 🔥 VERIFY 1.7
+        console.log("App: Fetching user...");
+        try {
+          const res = await api.get("/api/auth/me");
+          console.log("App: User fetched:", res.data);
 
-        // ZOMBIE CHECK: User via Cookie YES, Token NO -> Force Logout
-        const hasToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
-        if (res.data && !hasToken) {
-          console.warn("App: ZOMBIE SESSION DETECTED! User logged in via Cookie, but LocalStorage Token is missing. Forcing logout to fix.");
-          await api.post("/api/auth/logout");
+          // ZOMBIE CHECK: User via Cookie YES, Token NO -> Force Logout
+          // STRICT MODE: Only accept 'adminToken'. Ignore 'token'.
+          const hasToken = localStorage.getItem('adminToken');
+          if (res.data && !hasToken) {
+            console.warn("App: ZOMBIE SESSION DETECTED! User logged in via Cookie, but LocalStorage Token is missing. Forcing logout to fix.");
+            await api.post("/api/auth/logout");
+            setUser(null);
+            return;
+          }
+
+          setUser(res.data);
+        } catch (err) {
+          console.log("App: No session found or error:", err.message);
+          // Clear any potentially bad tokens explicitly
+          localStorage.removeItem('token');
+          localStorage.removeItem('adminToken');
+
+          if (err.code === 'ECONNABORTED') {
+            console.error("App: Request timed out. Backend might be sleeping or unreachable.");
+          }
           setUser(null);
-          return;
+        } finally {
+          setLoading(false);
         }
+      };
+      fetchUser();
 
-        setUser(res.data);
-      } catch (err) {
-        console.log("App: No session found or error:", err.message);
-        // Clear any potentially bad tokens explicitly
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminToken');
+      // Absolute failsafe: Turn off loading after 5 seconds no matter what
+      const timer = setTimeout(() => {
+        setLoading(current => {
+          if (current) {
+            console.error("App: Failsafe triggered. Forcing loading to false.");
+            console.log("App: VITE_API_URL is:", import.meta.env.VITE_API_URL);
+            return false; // Force stop loading
+          }
+          return current;
+        });
+      }, 5000);
 
-        if (err.code === 'ECONNABORTED') {
-          console.error("App: Request timed out. Backend might be sleeping or unreachable.");
-        }
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
-
-    // Absolute failsafe: Turn off loading after 5 seconds no matter what
-    const timer = setTimeout(() => {
-      setLoading(current => {
-        if (current) {
-          console.error("App: Failsafe triggered. Forcing loading to false.");
-          console.log("App: VITE_API_URL is:", import.meta.env.VITE_API_URL);
-          return false; // Force stop loading
-        }
-        return current;
-      });
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    }, []);
 
   if (loading) {
     return (
