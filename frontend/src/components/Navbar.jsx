@@ -16,9 +16,11 @@ const Navbar = ({ user, setUser }) => {
         } catch (err) {
             console.error(err);
         } finally {
-            setUser(null);
+            console.log("Forcing Logout...");
             localStorage.removeItem('token');
             localStorage.removeItem('adminToken');
+            setUser(null);
+            window.location.href = "/login"; // Force Hard Refresh/Redirect
         }
     };
     // ... rest of file implicitly kept by replace_file_content rules? No, I must provide full content or use correct Start/End.

@@ -13,11 +13,11 @@ const AdminSidebar = ({ setUser, isOpen, onClose }) => {
         } catch (err) {
             console.error("Logout API failed", err);
         } finally {
-            if (setUser) setUser(null);
-            if (setUser) setUser(null);
+            console.log("Forcing Admin Logout...");
             localStorage.removeItem('token');
             localStorage.removeItem('adminToken');
-            navigate("/");
+            if (setUser) setUser(null);
+            window.location.href = "/login?role=admin"; // Force Hard Redirect
         }
     };
 
