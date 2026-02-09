@@ -199,7 +199,7 @@ router.post(
   }
 );
 
-// Stats (ONLY ONE — correct)
+// Stats
 router.get("/stats", protect, admin, async (req, res) => {
   try {
     const students = await pool.query("SELECT COUNT(*) FROM users WHERE role='student'");
@@ -211,8 +211,85 @@ router.get("/stats", protect, admin, async (req, res) => {
       questions: Number(questions.rows[0].count),
       exams: Number(exams.rows[0].count)
     });
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// --- MISSING EXAM ROUTES ---
+
+// 1. Get All Exams (Admin)
+router.get("/exams", protect, admin, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM exams ORDER BY created_at DESC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching exams" });
+  }
+});
+
+// 2. Get Published Exams (Student)
+router.get("/published-exams", protect, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM exams WHERE is_published = true ORDER BY created_at DESC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching published exams" });
+  }
+});
+
+// 3. Toggle Publish Status
+router.patch("/exams/:id/toggle-publish", protect, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "UPDATE exams SET is_published = NOT is_published WHERE id = $1 RETURNING *",
+      [id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error updating exam" });
+  }
+});
+
+// 4. Delete Exam
+router.delete("/exams/:id", protect, admin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM exams WHERE id = $1", [id]);
+    res.json({ message: "Exam deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error deleting exam" });
+  }
+});
+
+// 5. Generate Random Exam
+router.post("/generate-exam", protect, admin, async (req, res) => {
+  const { title, questionCount, duration } = req.body;
+  try {
+    // Fetch random question IDs
+    const qRes = await pool.query(
+      "SELECT id FROM questions ORDER BY RANDOM() LIMIT $1",
+      [questionCount || 50]
+    );
+
+    const questionIds = qRes.rows.map(r => r.id);
+
+    const result = await pool.query(
+      `INSERT INTO exams (title, duration_minutes, question_ids, is_published)
+             VALUES ($1, $2, $3, $4) RETURNING *`,
+      [title, duration || 180, questionIds, false]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error generating exam" });
   }
 });
 
