@@ -85,7 +85,7 @@ function App() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      console.log("App Version: 1.5 - AUTO-LOGOUT FIX"); // 🔥 VERIFY THIS LOG
+      console.log("App Version: 1.6 - HARD LOGOUT & EXAM FIX"); // 🔥 VERIFY 1.6
       console.log("App: Fetching user...");
       try {
         const res = await api.get("/api/auth/me");
