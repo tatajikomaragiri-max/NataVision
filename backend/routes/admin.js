@@ -442,8 +442,8 @@ router.get("/results/:id/review", protect, async (req, res) => {
     const questionsMap = new Map(questionsQuery.rows.map(q => [q.id, q]));
     const orderedQuestions = result.question_ids.map(id => questionsMap.get(id)).filter(Boolean);
 
-    // 3. Parse user answers from result
-    const userAnswers = JSON.parse(result.answers);
+    // answers is already parsed by PostgreSQL (JSONB type)
+    const userAnswers = result.answers;
 
     // 4. Return combined data
     res.json({
