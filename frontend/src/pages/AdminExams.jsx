@@ -1,6 +1,5 @@
-// This file seems to be okay for now based on the previous view, 
-// but I'll add a check to ensure it handles paper_url correctly in the list.
-import api from "../api/axios"
+import React, { useState, useEffect } from "react";
+import api from "../api/axios";
 import { Plus, Shuffle, Calendar, Clock, CheckCircle, Trash2, Eye, EyeOff } from "lucide-react";
 
 const AdminExams = () => {
