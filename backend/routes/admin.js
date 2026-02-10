@@ -242,6 +242,20 @@ router.get("/exams", protect, admin, async (req, res) => {
   }
 });
 
+// 1b. Get All Students (Admin)
+router.get("/students", protect, admin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, email, role, created_at FROM users WHERE role = 'student' ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching students" });
+  }
+});
+
+
 // 2. Get Published Exams (Student)
 router.get("/published-exams", protect, async (req, res) => {
   try {
