@@ -12,7 +12,7 @@ const ResultReview = () => {
     useEffect(() => {
         const fetchReview = async () => {
             try {
-                const res = await api.get(`/api/admin/results/${id}`);
+                const res = await api.get(`/api/admin/results/${id}/review`);
                 setData(res.data);
             } catch (err) {
                 console.error("Failed to fetch review data");
@@ -97,7 +97,7 @@ const ResultReview = () => {
                                             <div key={oidx} className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all ${borderClass} ${bgClass} ${isUserSelected || isCorrectOption ? "shadow-sm" : ""}`}>
                                                 <div className="flex items-center gap-4">
                                                     <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${isCorrectOption ? "bg-green-500 text-white" :
-                                                            (isUserSelected ? "bg-red-500 text-white" : "bg-gray-100 text-gray-400")
+                                                        (isUserSelected ? "bg-red-500 text-white" : "bg-gray-100 text-gray-400")
                                                         }`}>
                                                         {String.fromCharCode(65 + oidx)}
                                                     </span>

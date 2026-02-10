@@ -50,6 +50,18 @@ router.post("/upload-questions", protect, admin, async (req, res) => {
           [title, duration || 180, questionIds, true]
         );
         exam = examRes.rows[0];
+
+        // ✅ Notify all students about new exam
+        await client.query(
+          `INSERT INTO notifications (user_id, title, message)
+           SELECT id, $1, $2 
+           FROM users 
+           WHERE role = 'student'`,
+          [
+            'New Exam Available! 🎯',
+            `"${title}" is now available with ${questions.length} questions!`
+          ]
+        );
       }
 
       await client.query("COMMIT");
@@ -245,11 +257,39 @@ router.get("/published-exams", protect, async (req, res) => {
 router.patch("/exams/:id/toggle-publish", protect, admin, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "UPDATE exams SET is_published = NOT is_published WHERE id = $1 RETURNING *",
-      [id]
-    );
-    res.json(result.rows[0]);
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const result = await client.query(
+        "UPDATE exams SET is_published = NOT is_published WHERE id = $1 RETURNING *",
+        [id]
+      );
+      const exam = result.rows[0];
+
+      // ✅ If now published, notify students
+      if (exam.is_published) {
+        await client.query(
+          `INSERT INTO notifications (user_id, title, message)
+           SELECT id, $1, $2 
+           FROM users 
+           WHERE role = 'student'`,
+          [
+            'New Exam Published! 🎯',
+            `"${exam.title}" is now available!`
+          ]
+        );
+      }
+
+      await client.query("COMMIT");
+      res.json(exam);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error updating exam" });
@@ -272,21 +312,45 @@ router.delete("/exams/:id", protect, admin, async (req, res) => {
 router.post("/generate-exam", protect, admin, async (req, res) => {
   const { title, questionCount, duration } = req.body;
   try {
-    // Fetch random question IDs
-    const qRes = await pool.query(
-      "SELECT id FROM questions ORDER BY RANDOM() LIMIT $1",
-      [questionCount || 50]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    const questionIds = qRes.rows.map(r => r.id);
+      // Fetch random question IDs
+      const qRes = await client.query(
+        "SELECT id FROM questions ORDER BY RANDOM() LIMIT $1",
+        [questionCount || 50]
+      );
 
-    const result = await pool.query(
-      `INSERT INTO exams (title, duration_minutes, question_ids, is_published)
-             VALUES ($1, $2, $3, $4) RETURNING *`,
-      [title, duration || 180, questionIds, false]
-    );
+      const questionIds = qRes.rows.map(r => r.id);
 
-    res.status(201).json(result.rows[0]);
+      const examResult = await client.query(
+        `INSERT INTO exams (title, duration_minutes, question_ids, is_published)
+               VALUES ($1, $2, $3, $4) RETURNING *`,
+        [title, duration || 180, questionIds, true]  // ✅ Auto-publish
+      );
+      const exam = examResult.rows[0];
+
+      // ✅ Notify all students
+      await client.query(
+        `INSERT INTO notifications (user_id, title, message)
+         SELECT id, $1, $2 
+         FROM users 
+         WHERE role = 'student'`,
+        [
+          'New Exam Available! 🎯',
+          `"${title}" is now live with ${questionIds.length} questions!`
+        ]
+      );
+
+      await client.query("COMMIT");
+      res.status(201).json(exam);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error generating exam" });
@@ -333,6 +397,57 @@ router.get("/results/:id", protect, async (req, res) => {
     res.status(500).json({ message: "Server error fetching result" });
   }
 });
+
+// 6c. Get Result Review Data (Questions + Answers) - NEW FOR REVIEW PAGE
+router.get("/results/:id/review", protect, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Fetch the result
+    const resultQuery = await pool.query(
+      `SELECT er.*, e.title as exam_title, e.question_ids
+       FROM exam_results er
+       JOIN exams e ON er.exam_id = e.id
+       WHERE er.id = $1`,
+      [id]
+    );
+
+    if (resultQuery.rows.length === 0) {
+      return res.status(404).json({ message: "Result not found" });
+    }
+
+    const result = resultQuery.rows[0];
+
+    // 2. Fetch the questions for this exam
+    const questionsQuery = await pool.query(
+      `SELECT * FROM questions WHERE id = ANY($1)`,
+      [result.question_ids]
+    );
+
+    // Map questions to match the order in question_ids
+    const questionsMap = new Map(questionsQuery.rows.map(q => [q.id, q]));
+    const orderedQuestions = result.question_ids.map(id => questionsMap.get(id)).filter(Boolean);
+
+    // 3. Parse user answers from result
+    const userAnswers = JSON.parse(result.answers);
+
+    // 4. Return combined data
+    res.json({
+      exam_title: result.exam_title,
+      score: result.score,
+      total_marks: result.total_marks,
+      correct_count: result.correct_count,
+      wrong_count: result.wrong_count,
+      questions: orderedQuestions,
+      answers: userAnswers
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching review data" });
+  }
+});
+
 
 
 // 7. Get Exam Questions (Student Validation)
@@ -432,6 +547,48 @@ router.post("/submit-exam", protect, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error submitting exam" });
+  }
+});
+
+// 9. Get User Notifications
+router.get("/notifications", protect, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50",
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching notifications" });
+  }
+});
+
+// 10. Mark Notification as Read
+router.patch("/notifications/:id/read", protect, async (req, res) => {
+  try {
+    await pool.query(
+      "UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2",
+      [req.params.id, req.user.id]
+    );
+    res.json({ message: "Notification marked as read" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error updating notification" });
+  }
+});
+
+// 11. Mark All Notifications as Read
+router.patch("/notifications/mark-all-read", protect, async (req, res) => {
+  try {
+    await pool.query(
+      "UPDATE notifications SET is_read = true WHERE user_id = $1",
+      [req.user.id]
+    );
+    res.json({ message: "All notifications marked as read" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error updating notifications" });
   }
 });
 
