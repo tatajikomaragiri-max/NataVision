@@ -16,6 +16,7 @@ const AdminSidebar = ({ setUser, isOpen, onClose }) => {
             console.log("Forcing Admin Logout...");
             localStorage.removeItem('token');
             localStorage.removeItem('adminToken');
+            localStorage.clear(); // NUKE EVERYTHING
             if (setUser) setUser(null);
             window.location.href = "/login?role=admin"; // Force Hard Redirect
         }

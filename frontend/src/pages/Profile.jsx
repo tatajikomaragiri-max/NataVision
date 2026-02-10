@@ -34,11 +34,21 @@ const Profile = ({ user, setUser }) => {
 
     const handleLogout = async () => {
         try {
-            await api.post("/api/auth/logout");
+            await api.post(
+                "/api/auth/logout",
+                {},
+                { withCredentials: true }
+            );
             setUser(null);
-            window.location.href = "/";
+            localStorage.removeItem('token');
+            localStorage.removeItem('adminToken');
         } catch (err) {
-            console.error("Logout failed");
+            console.error(err);
+        } finally {
+            console.log("Forcing Logout...");
+            localStorage.clear(); // NUKE EVERYTHING
+            setUser(null);
+            window.location.href = "/login"; // Force Hard Refresh/Redirect
         }
     };
 

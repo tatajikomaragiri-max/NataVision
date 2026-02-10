@@ -363,9 +363,11 @@ router.post("/submit-exam", protect, async (req, res) => {
     // Map for easy lookup
     const questionMap = new Map(questionsRes.rows.map(q => [q.id, q]));
 
-    // 2. Calculate Score
+    // 2. Calculate Score and Counts
     let score = 0;
     let totalMarks = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
 
     // Iterate based on exam.question_ids to maintain order matching the answers array
     exam.question_ids.forEach((qId, idx) => {
@@ -377,16 +379,23 @@ router.post("/submit-exam", protect, async (req, res) => {
         // userAnswers array index corresponds to question index
         if (answers[idx] === question.correct_index) {
           score += points;
+          correctCount++; // Increment correct answers count
+        } else {
+          wrongCount++; // Increment wrong answers count
         }
       }
     });
 
+    // Safety net: ensure counts are never null
+    correctCount = correctCount ?? 0;
+    wrongCount = wrongCount ?? 0;
+
     // 3. Save Result
     const resultRes = await pool.query(
-      `INSERT INTO exam_results (user_id, exam_id, score, total_marks, answers, completed_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
+      `INSERT INTO exam_results (user_id, exam_id, score, total_marks, correct_count, wrong_count, answers, completed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
        RETURNING id`,
-      [userId, examId, score, totalMarks, JSON.stringify(answers)]
+      [userId, examId, score, totalMarks, correctCount, wrongCount, JSON.stringify(answers)]
     );
 
     res.json({
