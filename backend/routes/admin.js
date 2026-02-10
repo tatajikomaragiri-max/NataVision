@@ -311,6 +311,30 @@ router.get("/my-results", protect, async (req, res) => {
   }
 });
 
+// 6b. Get Single Result by ID (Student)
+router.get("/results/:id", protect, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT er.*, e.title as exam_title 
+             FROM exam_results er 
+             JOIN exams e ON er.exam_id = e.id 
+             WHERE er.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Result not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching result" });
+  }
+});
+
+
 // 7. Get Exam Questions (Student Validation)
 router.get("/exams/:id/questions", protect, async (req, res) => {
   try {
