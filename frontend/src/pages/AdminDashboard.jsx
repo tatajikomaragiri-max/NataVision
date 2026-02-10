@@ -19,10 +19,10 @@ const AdminDashboard = () => {
     }, []);
 
     const cards = [
-        { label: "Total Students", value: stats.students || 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-        { label: "Question Bank", value: stats.questions || 0, icon: FileText, color: "text-purple-600", bg: "bg-purple-50" },
-        { label: "Active Exams", value: stats.exams || 0, icon: ClipboardList, color: "text-green-600", bg: "bg-green-50" },
-        { label: "Growth", value: "+12%", icon: TrendingUp, color: "text-orange-600", bg: "bg-orange-50" },
+        { label: "Total Students", value: stats.students || 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50", link: "/admin/students" },
+        { label: "Question Bank", value: stats.questions || 0, icon: FileText, color: "text-purple-600", bg: "bg-purple-50", link: "/admin/upload-paper" },
+        { label: "Active Exams", value: stats.exams || 0, icon: ClipboardList, color: "text-green-600", bg: "bg-green-50", link: "/admin/exams" },
+        { label: "Growth", value: "+12%", icon: TrendingUp, color: "text-orange-600", bg: "bg-orange-50", link: "/admin" },
     ];
 
     return (
@@ -39,7 +39,11 @@ const AdminDashboard = () => {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
                 {cards.map((stat, index) => (
-                    <div key={index} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+                    <Link
+                        key={index}
+                        to={stat.link}
+                        className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all group cursor-pointer"
+                    >
                         <div className="flex items-center gap-3 mb-2">
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
                                 <stat.icon size={16} />
@@ -49,7 +53,7 @@ const AdminDashboard = () => {
                         <div className="flex items-baseline gap-2">
                             <span className="text-xl font-black text-gray-900">{stat.value}</span>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
 
