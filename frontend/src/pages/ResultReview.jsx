@@ -8,6 +8,7 @@ const ResultReview = () => {
     const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchReview = async () => {
@@ -15,7 +16,8 @@ const ResultReview = () => {
                 const res = await api.get(`/api/admin/results/${id}/review`);
                 setData(res.data);
             } catch (err) {
-                console.error("Failed to fetch review data");
+                console.error("Failed to fetch review data:", err);
+                setError(err.response?.data?.message || err.message || "Failed to load review");
             } finally {
                 setLoading(false);
             }
@@ -24,6 +26,7 @@ const ResultReview = () => {
     }, [id]);
 
     if (loading) return <div className="h-screen flex items-center justify-center font-black text-[#3b6a9a]">Loading Review...</div>;
+    if (error) return <div className="p-10 text-center"><div className="font-black text-red-600 mb-2">Error Loading Review</div><div className="text-sm text-gray-600">{error}</div></div>;
     if (!data) return <div className="p-10 text-center font-black">Review Not Available</div>;
 
     const { questions, answers } = data;
